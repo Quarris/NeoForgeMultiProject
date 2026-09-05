@@ -1,75 +1,128 @@
 # Multiproject Minecraft Mod Template
 
-Bare Gradle scaffold for developing multiple NeoForge mods (Minecraft
-1.21.1) side by side, each one a fully independent, standalone-buildable
-project. No mods included yet - see "Adding a mod" below.
+A bare Gradle scaffold for developing multiple NeoForge mods (Minecraft
+1.21.1) side by side, where each mod is still a fully independent,
+standalone-buildable project. There are no mods in here yet — this is the
+starting point. See "Adding a mod" below.
 
 ## Requirements
 
 - JDK 21
 - Git (recommended)
 
-Use the included wrapper (`gradlew`/`gradlew.bat`) - no separate Gradle install needed.
+You don't need Gradle installed separately — use the included wrapper
+(`gradlew` / `gradlew.bat`) in whichever folder you're building from.
 
 ## How this template works
 
-Each mod lives in its own folder as a fully self-contained Gradle project
-(own settings.gradle, build.gradle, gradle.properties, gradlew). Copy any
-mod folder out and it still builds with no knowledge of this root or any
-other mod.
+The core idea: every mod you add lives in its own folder as a **fully
+self-contained Gradle project** — own `settings.gradle`, `build.gradle`,
+`gradle.properties`, and `gradlew` wrapper. Copy any one of those folders out
+on its own (a separate repo, a separate zip) and it still builds, compiles
+and runs with no knowledge of this root folder or any other mod.
 
-This root folder holds no mod code. It only:
+This root folder (`settings.gradle`, `build.gradle`, `gradle.properties`)
+doesn't contain any mod code itself. It just:
 
-1. `include(...)`s each mod folder in settings.gradle, so they build/run together and IDEs see one project.
-2. Optionally substitutes Maven-coordinate dependencies between mods for live source (build.gradle), skipping `mavenLocal()` publishing while co-developing.
-3. Optionally defines a combined run (`runAllClient`/`runAllServer`) launching every mod in `modProjects` together.
+1. **Includes** each mod folder (`settings.gradle`'s `include(...)`) so you
+   can build/run them together and IDEs see the whole thing as one project.
+2. Optionally **substitutes** Maven-coordinate dependencies between mods
+   for live source (root `build.gradle`) so you're not publishing to
+   `mavenLocal()` on every change while co-developing.
+3. Optionally defines a **combined run** (`runAllClient`/`runAllServer` in
+   root `build.gradle`) that launches every mod in the `modProjects` list
+   together in one game instance.
 
-None of this is required for any individual mod to build.
+None of that is required for any individual mod to build — it's purely
+convenience for when you're working on several of them together.
 
 ## Adding a mod
 
-### A. Generate a fresh mod and drop it in
+There are three situations you might be in, depending on where the mod
+comes from.
 
-1. Generate a mod for MC 1.21.1 via the [NeoForge generator](https://neoforged.net/)
-   (or the [ModDevGradle MDK](https://github.com/NeoForgeMDKs)), matching this
-   template's Minecraft/NeoForge/Parchment versions.
-2. Move it into a new folder here, e.g. `mymod/`.
-3. Continue from step 4 under "Bringing in an existing project" below.
+### 1. Generating a fresh mod
 
-### B. Bringing in an existing project
+1. Use the [NeoForge mod generator](https://neoforged.net/) (or clone the
+   [MDK for the ModDevGradle plugin](https://github.com/NeoForgeMDKs)) to
+   generate a new mod for Minecraft 1.21.1. Pick the same
+   Minecraft/NeoForge/Parchment versions as this template's root
+   `gradle.properties`, so everything lines up if you build it alongside
+   other mods later.
+2. Move the generated project into a new folder here, e.g. `mymod/`.
+3. Follow "A project that already matches this template's shape" below — a
+   freshly generated mod already has that shape (its own `settings.gradle`,
+   `build.gradle`, `gradle.properties` and `gradlew`), it just isn't wired
+   into this root yet.
 
-#### Already matches this template's shape
+   Note: the MDK's own `build.gradle` ships a commented-out
+   `tasks.named('wrapper', Wrapper).configure { ... }` block, which some
+   versions of the generator uncomment automatically the first time you run
+   `./gradlew wrapper` inside the generated project standalone. Normally that
+   line would fail once the mod is included here (`Task with name 'wrapper'
+   not found`), since Gradle only auto-creates a `wrapper` task on the actual
+   root of the build. This template's root `build.gradle` pre-registers a
+   `wrapper` task on every included subproject for exactly this reason, so
+   you can drop the generated mod in unmodified — no need to comment
+   anything out.
 
-Has its own settings.gradle/build.gradle/gradle.properties/gradlew already:
+### 2. A project that already matches this template's shape
 
-1. Copy (or clone) its folder in, e.g. `mymod/`.
-2. Add `'mymod'` to `include(...)` in root settings.gradle.
-3. Add `"mymod"` to `modProjects` in root build.gradle if you want it in the combined launch.
-4. If it depends on another mod here, add a substitution line (see "Cross-mod dependencies").
+If it already has its own `settings.gradle`, `build.gradle`,
+`gradle.properties` and `gradlew` (for example, a mod you previously split
+out of a multiproject folder like this one), wiring it in is just:
 
-Nothing else changes - it stays independently buildable.
+1. Copy (or `git clone`) its folder into this root folder, e.g. `mymod/`.
+2. Add `'mymod'` to the `include(...)` line in the root `settings.gradle`.
+3. If you want it in the combined launch, add `"mymod"` to the root
+   `build.gradle`'s `modProjects` list.
+4. If it depends on another mod here via a Maven coordinate, add a matching
+   `substitute(module('group:artifact')).using(project(':othermod'))` line
+   to the root `build.gradle` (see "Cross-mod dependencies" below).
 
-#### A NeoForge project from somewhere else (different template, vanilla MDK, solo repo)
+Nothing else needs to change — `mymod`'s own `build.gradle`/`gradle.properties`
+stay as they are, and it remains independently buildable on its own.
 
-Needs the toolchain/plugin setup aligned first:
+### 3. A NeoForge project from somewhere else (a different template, the vanilla MDK, a solo repo)
 
-1. Copy the folder in as-is.
-2. Match `minecraft_version`, `neo_version`, `parchment_minecraft_version`,
-   `parchment_mappings_version` to the root gradle.properties - a build can't
-   mix MC/NeoForge versions across subprojects.
-3. Check its NeoForge plugin - this template uses ModDevGradle
-   (`net.neoforged.moddev` 2.0.144). NeoGradle or an old ModDevGradle version:
-   upgrade it, or keep it standalone-only and consume it as a published jar instead.
-4. Add its own `settings.gradle`/`gradlew` if missing (template below).
-5. Make sure `mod_id`/`mod_group_id` don't collide with existing mods; follow
-   the `mod_group_id_base` convention if you want the generic substitution rule to pick it up.
-6. Add it to `include(...)`, and to `modProjects` if wanted in the combined launch.
-7. For a dependency on another mod here: `implementation` coordinate + `mavenLocal()`
-   in its build.gradle, plus a substitution line at root.
+This needs a bit more care, since the toolchain and plugin setup have to
+line up with everything else in this build:
 
-`./gradlew :mymod:build` surfaces version/plugin mismatches quickly.
+1. Copy the project's folder in as-is (e.g. `mymod/`).
+2. Check its `gradle.properties` against the root `gradle.properties`:
+   `minecraft_version`, `neo_version`, `parchment_minecraft_version` and
+   `parchment_mappings_version` all need to match — a single Gradle build
+   can't mix Minecraft/NeoForge versions across subprojects. Bump whichever
+   side is behind.
+3. Check which NeoForge Gradle plugin it uses. This template uses
+   ModDevGradle (`net.neoforged.moddev` version `2.0.144`). If the incoming
+   project uses NeoGradle (`net.neoforged.gradle...`) or a much older
+   ModDevGradle version, either upgrade its `build.gradle` to match, or
+   leave it building standalone only (don't add it to `include(...)`) and
+   consume it as a published jar dependency instead (see "Cross-mod
+   dependencies" below).
+4. If it doesn't already have its own `settings.gradle` and `gradlew`, add
+   them (see the template below) so it stays standalone-buildable like any
+   other mod folder here.
+5. Make sure its `mod_id` and `mod_group_id` don't collide with any other
+   mod you've already added. If you want it covered by the generic
+   dependency-substitution rule (see "Cross-mod dependencies" below),
+   update its `mod_group_id` to follow the `mod_group_id_base` convention
+   from the root `gradle.properties` (`<mod_group_id_base>.<mod_id>`).
+6. Add its folder name to the root `settings.gradle`'s `include(...)`, and
+   optionally to `modProjects` in the root `build.gradle` for the combined
+   launch.
+7. If it should depend on another mod here, add
+   `implementation 'group:artifact:version'` to its `dependencies { }`
+   (plus `mavenLocal()` to its `repositories { }`), and a substitution line
+   in the root `build.gradle` if you want live source while co-developing.
 
-A minimal standalone `settings.gradle` for a mod folder that doesn't have one yet:
+If anything's misaligned, `./gradlew :mymod:build` from the root (or
+`:mymod:tasks` first) will surface version/plugin conflicts quickly rather
+than failing deep into compilation.
+
+A minimal standalone `settings.gradle` for a mod folder that doesn't have
+one yet:
 
 ```groovy
 pluginManagement {
@@ -85,11 +138,16 @@ plugins {
 rootProject.name = 'mymod'
 ```
 
-Copy `gradlew`, `gradlew.bat`, `gradle/wrapper/` from root into `mymod/` too.
+Copy `gradlew`, `gradlew.bat` and `gradle/wrapper/` from this root folder
+into `mymod/` too, so it has its own wrapper.
 
 ## Cross-mod dependencies
 
-Declare it as a normal Maven coordinate, not `project(':core')` (breaks standalone builds):
+If one mod depends on another (say `feature` depends on `core`), declare it
+as a normal Maven coordinate in `feature/build.gradle` — **not** a Gradle
+`project(':core')` reference, since that only makes sense when both mods
+live inside the same Gradle build, which breaks the "copy this folder out
+and it still builds" goal:
 
 ```groovy
 repositories {
@@ -101,8 +159,14 @@ dependencies {
 }
 ```
 
-Standalone, this resolves from `mavenLocal()` - run `publishToMavenLocal` in
-`core/` first. Through this root, substitute it for the live project instead:
+Built standalone, `feature` resolves `core` from `mavenLocal()` (your local
+`~/.m2` repository) — so you'd run `./gradlew publishToMavenLocal` inside
+`core/` before building `feature/` alone.
+
+While co-developing everything together through *this* root project, you
+don't want to re-run `publishToMavenLocal` every time you touch `core`'s
+code. Add a dependency substitution rule to the root `build.gradle` for that
+dependency:
 
 ```groovy
 allprojects {
@@ -114,9 +178,20 @@ allprojects {
 }
 ```
 
-For more than a couple of mods, use the generic version instead (also in root
-build.gradle, commented out) - substitutes every cross-mod dependency automatically
-as long as each mod's `mod_group_id` follows the `<mod_group_id_base>.<mod_id>` convention:
+This transparently swaps that Maven coordinate for the live `:core`
+subproject when building through this root folder, so `feature` always
+compiles and runs against `core`'s current source — no publish step needed.
+Standalone (no root `build.gradle` present), this rule doesn't exist, so the
+dependency resolves normally from `mavenLocal()`.
+
+**Doing this for every mod automatically.** Writing one substitution line per
+cross-mod dependency is fine for a couple of mods, but gets repetitive as the
+project grows. If every mod's `mod_group_id` follows the `mod_group_id_base`
+convention set in the root `gradle.properties` (group is
+`<mod_group_id_base>.<mod_id>`, artifact id is `<mod_id>`), its Maven
+coordinate becomes fully predictable from just its folder name — so one
+generic rule can substitute every cross-mod dependency at once, with nothing
+to add as you bring in more mods:
 
 ```groovy
 allprojects { proj ->
@@ -133,25 +208,41 @@ allprojects { proj ->
 }
 ```
 
-`core` needs no special wiring to load alongside `feature` - NeoForge picks up
-its `neoforge.mods.toml` from the classpath like any other mod dependency.
+Both versions (the explicit one-liner and this generic loop) are included,
+commented out, in the root `build.gradle` — use whichever fits: the explicit
+version is easier to read at a glance ("these two mods are linked"), the
+generic version needs no upkeep as the project grows but relies on every mod
+actually following the group-id convention.
+
+The depended-on mod (`core` in this example) doesn't need any special wiring
+to load alongside `feature` in the dev environment: once it's a real
+dependency (project-substituted or a published jar, either way), NeoForge
+finds its `neoforge.mods.toml` on the runtime classpath and loads it
+automatically, the same way it would pick up any other real mod dependency
+(e.g. JEI).
 
 ## Combined "launch everything" run
 
-`runAllClient`/`runAllServer` launch every mod in `modProjects` (root build.gradle)
-together in one game instance:
+The root `build.gradle` defines `runAllClient` and `runAllServer` tasks that
+launch every mod in one list together in a single game instance — useful
+once you have more than one mod and want to test them interacting, not just
+each one on its own. It's driven by a single list near the bottom of the
+file:
 
 ```groovy
 def modProjects = []
 ```
 
-Add mod folder names (must match `settings.gradle`'s `include(...)`), then:
+Add a mod's folder name to that list (it must match a subproject name
+declared in `settings.gradle`) and run:
 
 ```
 ./gradlew runAllClient
 ```
 
-Both `mods { }` and `loadedMods` are generated from that one list.
+Both the `mods { }` registration and `loadedMods` are generated from that
+one list, so there's nothing else to keep in sync. It's empty by default —
+nothing to launch until you've added at least one mod.
 
 ## Project structure
 
@@ -166,8 +257,10 @@ multiproject/
 
 ## Notes
 
-- **Version bumps**: keep NeoForge/Minecraft/Parchment versions in sync across
-  root and every mod's own gradle.properties. Current pins: NeoForge `21.1.248`,
-  Parchment `2024.11.17` - check for newer releases at
+- **Version bumps**: NeoForge/Minecraft/Parchment versions should stay in
+  sync across the root `gradle.properties` and every mod folder's own
+  `gradle.properties`, since each mod stands alone. Versions pinned here
+  (NeoForge `21.1.248`, Parchment `2024.11.17`) were current as of this
+  template being generated — check
   https://projects.neoforged.net/neoforged/neoforge and
-  https://parchmentmc.org/docs/getting-started.
+  https://parchmentmc.org/docs/getting-started for newer releases.
