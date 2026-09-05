@@ -1,0 +1,38 @@
+# Gradle
+.gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Generated datagen output (regenerate with `./gradlew runData`)
+**/src/generated/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs / runtime
+run/
+logs/
+*.log
+
+# Local Gradle properties (secrets/tokens, machine-specific overrides)
+local.properties
+
+# Catch-all for any other tool/editor dot-folder at the repo root
+/.*/
+!/.github/

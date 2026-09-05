@@ -1,0 +1,74 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.144' apply false
+}
+
+// Bare scaffold - each mod is its own self-contained Gradle project (see
+// README "Adding a mod"). This root just wires them together and defines
+// the optional combined run below; neither is required to build a mod.
+
+// Cross-mod dependency substitution (see README "Cross-mod dependencies").
+// Generic - substitutes every cross-mod dependency if mods follow the
+// mod_group_id_base convention:
+/*
+allprojects { proj ->
+    proj.configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            rootProject.subprojects.each { sub ->
+                if (sub != proj) {
+                    substitute(module("${rootProject.mod_group_id_base}.${sub.name}:${sub.name}"))
+                        .using(project(sub.path))
+                }
+            }
+        }
+    }
+}
+*/
+
+// Or explicit, one line per dependency:
+/*
+allprojects {
+    configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module('com.example.core:core')).using(project(':core'))
+        }
+    }
+}
+*/
+
+// Combined "launch everything" run - add mod folder names here.
+def modProjects = []
+
+evaluationDependsOnChildren()
+
+apply plugin: 'java-library'
+apply plugin: 'net.neoforged.moddev'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = neo_version
+
+    parchment {
+        minecraftVersion = parchment_minecraft_version
+        mappingsVersion = parchment_mappings_version
+    }
+
+    mods {
+        modProjects.each { modId ->
+            create(modId) {
+                sourceSet project(":$modId").sourceSets.main
+            }
+        }
+    }
+
+    runs {
+        allClient {
+            client()
+            loadedMods = modProjects.collect { mods.getByName(it) }
+        }
+        allServer {
+            server()
+            loadedMods = modProjects.collect { mods.getByName(it) }
+        }
+    }
+}
