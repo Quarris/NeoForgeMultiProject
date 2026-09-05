@@ -28,7 +28,7 @@ None of this is required for any individual mod to build.
 
 ## Adding a mod
 
-### Option A: generate a fresh mod and drop it in
+### A. Generate a fresh mod and drop it in
 
 1. Generate a mod for MC 1.21.1 via the [NeoForge generator](https://neoforged.net/)
    (or the [ModDevGradle MDK](https://github.com/NeoForgeMDKs)), matching this
@@ -36,7 +36,7 @@ None of this is required for any individual mod to build.
 2. Move it into a new folder here, e.g. `mymod/`.
 3. Continue from step 4 under "Bringing in an existing project" below.
 
-### Bringing in an existing project
+### B. Bringing in an existing project
 
 #### Already matches this template's shape
 
